@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="cd500b42-a5aa-41c3-b53a-92a655143d83" >
+		<db:my-sql-connection host="127.0.0.1" port="3306" user="root" password="root" database="training" />
+	</db:config>
+	<flow name="getAccounts" doc:id="6905aff3-cec9-42b3-bf77-5e5add1cc0a3" >
+		<set-variable value="#[attributes.queryParams.'type' default &quot;personal&quot;]" doc:name="accountType" doc:id="67f8a1de-2b30-4077-8c6c-7fc65fffcc6f" variableName="accountType"/>
+		<db:select doc:name="GET Accounts" doc:id="fe550f5b-0682-4e16-9516-f4371348f0db" config-ref="Database_Config">
+			<db:sql ><![CDATA[select id,name,address, AccountType from flights_customers where accountType=:val]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	val: vars.accountType
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="d82dd0ef-4a3c-4534-a340-d97f3512b3dc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(payload01, indexOfpayload01 ) -> {
+	id: payload01.id,
+	name: payload01.name,
+	"type": payload01.AccountType default "",
+	address: payload01.address default "",
+	Accounttype: payload01.AccountType
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postAccounts" doc:id="483a324c-7a46-4271-b59f-c5a3decb715f" >
+		<set-payload value="Accounts added successfully" doc:name="Set Payload" doc:id="343d2122-f6cd-4bb4-aa22-d14d461b1a14" />
+	</flow>
+</mule>
